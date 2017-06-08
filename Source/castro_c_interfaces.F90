@@ -78,7 +78,9 @@ contains
 #ifdef CUDA
     use cuda_interfaces_module, only: cuda_compute_temp
 #endif
-
+    use simple_log_module
+    use bl_error_module
+   
     implicit none
 
     integer,  intent(in   ) :: lo(3),hi(3)
@@ -96,6 +98,8 @@ contains
     integer :: cuda_result
     integer(kind=cuda_stream_kind) :: stream
     type(dim3) :: numThreads, numBlocks
+
+    allocate(errors)
 
     stream = cuda_streams(mod(idx, max_cuda_streams) + 1)
 
@@ -117,6 +121,10 @@ contains
 
     cuda_result = cudaStreamSynchronize(stream)
 
+    if (errors > 0) call bl_error('I was triggered')
+
+    deallocate(errors)
+
     call bl_deallocate(lo_d)
     call bl_deallocate(hi_d)
     call bl_deallocate(s_lo_d)
@@ -125,6 +133,8 @@ contains
 #else
 
     call compute_temp(lo, hi, state, s_lo, s_hi)
+    if (errors > 0) call bl_error('I was triggered')
+
 
 #endif
 

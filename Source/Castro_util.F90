@@ -1088,6 +1088,8 @@ contains
     use bl_constants_module, only: ZERO, ONE
     use amrex_fort_module, only: rt => amrex_real
     use meth_params_module, only: NVAR, URHO, UEDEN, UEINT, UTEMP, UFS, UFX
+    
+    use simple_log_module
 
     implicit none
 
@@ -1106,13 +1108,15 @@ contains
        do j = lo(2),hi(2)
           do i = lo(1),hi(1)
 
-#ifndef CUDA
+!#ifndef CUDA
+             call log_error(1)
              if (state(i,j,k,URHO) <= ZERO) then
                 print *,'   '
                 print *,'>>> Error: Castro_util.F90::ca_compute_temp ',i,j,k
                 print *,'>>> ... negative density ',state(i,j,k,URHO)
                 print *,'    '
-                call bl_error("Error:: compute_temp_nd.F90")
+            !    call bl_error("Error:: compute_temp_nd.F90")
+            !     call log_error(1)
              end if
 
              if (state(i,j,k,UEINT) <= ZERO) then
@@ -1120,9 +1124,9 @@ contains
                 print *,'>>> Warning: Castro_util.F90::ca_compute_temp ',i,j,k
                 print *,'>>> ... negative (rho e) ',state(i,j,k,UEINT)
                 print *,'   '
-                call bl_error("Error:: compute_temp_nd.F90")
+             !   call bl_error("Error:: compute_temp_nd.F90")
              end if
-#endif
+!#endif
 
           enddo
        enddo
