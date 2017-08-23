@@ -16,7 +16,7 @@ subroutine amrex_probinit (init,name,namlen,problo,probhi) bind(c)
 
   type(eos_t) :: eos_state
 
-  namelist /fortin/ p_ambient, dens_ambient, exp_energy, r_init, nsub
+  namelist /fortin/ r_init, p_ambient, exp_energy, dens_ambient, nsub
   
   ! Build "probin" filename -- the name of file containing fortin namelist.
   integer, parameter :: maxlen = 256
@@ -26,12 +26,13 @@ subroutine amrex_probinit (init,name,namlen,problo,probhi) bind(c)
      probin(i:i) = char(name(i))
   end do
 
-  allocate(p_ambient)
-  allocate(dens_ambient)
-  allocate(e_ambient)
-  allocate(exp_energy)
-  allocate(r_init)
-  allocate(nsub)
+  !allocate(p_ambient)
+  !allocate(dens_ambient)
+  !allocate(e_ambient)
+  !allocate(exp_energy)
+  !allocate(r_init)
+  !allocate(nsub)
+  !allocate(nsub_in)
 
   ! set namelist defaults
 
@@ -42,10 +43,12 @@ subroutine amrex_probinit (init,name,namlen,problo,probhi) bind(c)
   nsub = 4
 
   ! Read namelists
-  untin = 9
-  open(untin,file=probin(1:namlen),form='formatted',status='old')
+  untin = 12
+  open(untin,file=probin(1:namlen))
   read(untin,fortin)
   close(unit=untin)
+
+  !nsub = nsub_in
 
   ! Convert the ambient pressure into an ambient energy
 
@@ -71,12 +74,12 @@ subroutine probinit_finalize() bind(c)
 
   use probdata_module
 
-  deallocate(p_ambient)
-  deallocate(dens_ambient)
-  deallocate(e_ambient)
-  deallocate(exp_energy)
-  deallocate(r_init)
-  deallocate(nsub)
+!  deallocate(p_ambient)
+!  deallocate(dens_ambient)
+!  deallocate(e_ambient)
+!  deallocate(exp_energy)
+!  deallocate(r_init)
+!  deallocate(nsub)
 
 end subroutine probinit_finalize
 
