@@ -321,17 +321,8 @@ subroutine ca_set_method_params(dm,Density,Xmom,Eden,Eint,Temp, &
                                 FirstAdv,FirstSpec,FirstAux,numadv) &
                                 bind(C, name="ca_set_method_params")
 
-  use meth_params_module
-  use network, only: nspec, naux
-  use parallel, only: parallel_initialize
+  use timestep_module, only: ca_estdt
   use eos_module, only: eos_init
-  use eos_type_module, only: eos_get_small_dens, eos_get_small_temp
-  use bl_constants_module, only: ZERO, ONE
-  use amrex_fort_module, only: rt => amrex_real
-#if (defined(CUDA) && !defined(NO_CUDA_8))
-  use cudafor, only: cudaMemAdvise, cudaMemAdviseSetPreferredLocation
-  use cuda_module, only: cuda_device_id
-#endif
 
   implicit none
 
@@ -339,101 +330,10 @@ subroutine ca_set_method_params(dm,Density,Xmom,Eden,Eint,Temp, &
   integer, intent(in) :: Density, Xmom, Eden, Eint, Temp, &
        FirstAdv, FirstSpec, FirstAux
   integer, intent(in) :: numadv
-  integer :: iadv, ispec
 
-  integer :: i
-  integer :: ioproc
+  call eos_init()
 
-#ifdef CUDA
-  integer :: cuda_result
-#endif
-
-  call parallel_initialize()
-
-  ! easy indexing for the passively advected quantities.  This
-  ! lets us loop over all groups (advected, species, aux)
-  ! in a single loop.
-  allocate(qpass_map(QVAR))
-  allocate(upass_map(NVAR))
-  allocate(npassive)
-
-  ! Transverse velocities
-
-  if (dm == 1) then
-     upass_map(1) = UMY
-     qpass_map(1) = QV
-
-     upass_map(2) = UMZ
-     qpass_map(2) = QW
-
-     npassive = 2
-
-  else if (dm == 2) then
-     upass_map(1) = UMZ
-     qpass_map(1) = QW
-
-     npassive = 1
-  else
-     npassive = 0
-  endif
-
-  do iadv = 1, nadv
-     upass_map(npassive + iadv) = UFA + iadv - 1
-     qpass_map(npassive + iadv) = QFA + iadv - 1
-  enddo
-  npassive = npassive + nadv
-
-  if (QFS > -1) then
-     do ispec = 1, nspec+naux
-        upass_map(npassive + ispec) = UFS + ispec - 1
-        qpass_map(npassive + ispec) = QFS + ispec - 1
-     enddo
-     npassive = npassive + nspec + naux
-  endif
-
-
-  !---------------------------------------------------------------------
-  ! other initializations
-  !---------------------------------------------------------------------
-
-  ! This is a routine which links to the C++ ParallelDescriptor class
-
-  call bl_pd_is_ioproc(ioproc)
-
-  !---------------------------------------------------------------------
-  ! safety checks
-  !---------------------------------------------------------------------
-
-  if (small_dens <= 0.e0_rt) then
-     if (ioproc == 1) then
-        call bl_warning("Warning:: small_dens has not been set, defaulting to 1.e-200_rt.")
-     endif
-     small_dens = 1.e-200_rt
-  endif
-
-  if (small_temp <= 0.e0_rt) then
-     if (ioproc == 1) then
-        call bl_warning("Warning:: small_temp has not been set, defaulting to 1.e-200_rt.")
-     endif
-     small_temp = 1.e-200_rt
-  endif
-
-  ! Note that the EOS may modify our choices because of its
-  ! internal limitations, so the small_dens and small_temp
-  ! may be modified coming back out of this routine.
-
-  call eos_init(small_dens=small_dens, small_temp=small_temp)
-
-  ! Update device variables
-
-  !$acc update &
-  !$acc device(small_dens, small_temp)
-
-#if (defined(CUDA) && !defined(NO_CUDA_8))
-  cuda_result = cudaMemAdvise(qpass_map, QVAR, cudaMemAdviseSetPreferredLocation, cuda_device_id)
-  cuda_result = cudaMemAdvise(upass_map, NVAR, cudaMemAdviseSetPreferredLocation, cuda_device_id)
-  cuda_result = cudaMemAdvise(npassive, 1, cudaMemAdviseSetPreferredLocation, cuda_device_id)
-#endif
+  call ca_estdt()
 
 end subroutine ca_set_method_params
 
