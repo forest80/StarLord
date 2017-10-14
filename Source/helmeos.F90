@@ -102,27 +102,6 @@ public actual_eos, actual_eos_init, actual_eos_finalize
 
 contains
 
-    !  Frank Timmes Helmholtz based Equation of State
-    !  http://cococubed.asu.edu/
-
-    !..given a temperature temp [K], density den [g/cm**3], and a composition
-    !..characterized by abar and zbar, this routine returns most of the other
-    !..thermodynamic quantities. of prime interest is the pressure [erg/cm**3],
-    !..specific thermal energy [erg/gr], the entropy [erg/g/K], along with
-    !..their derivatives with respect to temperature, density, abar, and zbar.
-    !..other quantites such the normalized chemical potential eta (plus its
-    !..derivatives), number density of electrons and positron pair (along
-    !..with their derivatives), adiabatic indices, specific heats, and
-    !..relativistically correct sound speed are also returned.
-    !..
-    !..this routine assumes planckian photons, an ideal gas of ions,
-    !..and an electron-positron gas with an arbitrary degree of relativity
-    !..and degeneracy. interpolation in a table of the helmholtz free energy
-    !..is used to return the electron-positron thermodynamic quantities.
-    !..all other derivatives are analytic.
-    !..
-    !..references: cox & giuli chapter 24 ; timmes & swesty apj 1999
-
   subroutine actual_eos(input, state)
 
         use bl_error_module
@@ -1082,28 +1061,19 @@ contains
         input_is_constant = eos_input_is_constant
         do_coulomb = use_eos_coulomb
 
-        if (parallel_IOProcessor()) then
-           print *, ''
-           if (do_coulomb) then
-              print *, "Initializing Helmholtz EOS and using Coulomb corrections."
-           else
-              print *, "Initializing Helmholtz EOS without using Coulomb corrections."
-           endif
-           print *, ''
-        endif
-        
-        ! Read in the table
-
-        !..   open the table
-        open(unit=2,file='helm_table.dat',status='old',iostat=status)
-        if (status > 0) then
-           call bl_error('actual_eos_init: Failed to open helm_table.dat')
-        endif
-
         itmax = imax
         jtmax = jmax
 
-        !..   read the helmholtz free energy table
+        f = 0
+        fd = 0
+        ft = 0
+        fdd = 0
+        ftt = 0
+        fdt = 0
+        fddt = 0
+        fdtt = 0
+        fddtt = 0
+
         tlo   = 3.0d0
         thi   = 13.0d0
         tstp  = (thi - tlo)/float(jmax-1)
@@ -1118,31 +1088,23 @@ contains
            do i=1,imax
               dsav = dlo + (i-1)*dstp
               d(i) = 10.0d0**(dsav)
-              read(2,*) f(i,j),fd(i,j),ft(i,j),fdd(i,j),ftt(i,j),fdt(i,j), &
-                   fddt(i,j),fdtt(i,j),fddtt(i,j)
            end do
         end do
 
-        !..   read the pressure derivative with density table
-        do j = 1, jmax
-           do i = 1, imax
-              read(2,*) dpdf(i,j),dpdfd(i,j),dpdft(i,j),dpdfdt(i,j)
-           end do
-        end do
+        dpdf = 0
+        dpdfd = 0
+        dpdft = 0
+        dpdfdt = 0
 
-        !..   read the electron chemical potential table
-        do j = 1, jmax
-           do i = 1, imax
-              read(2,*) ef(i,j),efd(i,j),eft(i,j),efdt(i,j)
-           end do
-        end do
+        ef = 0
+        efd = 0
+        eft = 0
+        efdt = 0
 
-        !..   read the number density table
-        do j = 1, jmax
-           do i = 1, imax
-              read(2,*) xf(i,j),xfd(i,j),xft(i,j),xfdt(i,j)
-           end do
-        end do
+        xf = 0
+        xft = 0
+        xfd = 0
+        xfdt = 0
 
         !..   construct the temperature and density deltas and their inverses
         do j = 1, jmax-1
@@ -1165,8 +1127,6 @@ contains
            ddi_sav(i)  = ddi
            dd2i_sav(i) = dd2i
         end do
-
-        close(unit=2)
 
         ! Set up the minimum and maximum possible densities.
 
