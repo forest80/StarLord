@@ -40,20 +40,6 @@ module actual_eos_module
                                      dd_sav(:),dd2_sav(:),   &
                                      ddi_sav(:),dd2i_sav(:)
 
-#ifdef CUDA
-    attributes(managed) :: do_coulomb, input_is_constant
-    attributes(managed) :: itmax, jtmax
-    attributes(managed) :: d, t
-    attributes(managed) :: tlo, thi, tstp, tstpi
-    attributes(managed) :: dlo, dhi, dstp, dstpi
-    attributes(managed) :: f, fd, ft, fdd, ftt, fdt, fddt, fdtt, fddtt
-    attributes(managed) :: dpdf, dpdfd, dpdft, dpdfdt
-    attributes(managed) :: ef, efd, eft, efdt
-    attributes(managed) :: xf, xfd, xft, xfdt
-    attributes(managed) :: dt_sav, dt2_sav, dti_sav, dt2i_sav
-    attributes(managed) :: dd_sav, dd2_sav, ddi_sav, dd2i_sav
-#endif
-
     integer, parameter          :: max_newton = 100
 
     double precision, parameter :: ttol = 1.0d-8
@@ -112,17 +98,6 @@ private
     double precision, parameter :: onethird = 1.0d0/3.0d0
     double precision, parameter :: esqu = qe * qe
 
-    !$acc declare &
-    !$acc create(tlo, thi, dlo, dhi) &
-    !$acc create(tstp, tstpi, dstp, dstpi) &
-    !$acc create(itmax, jtmax, d, t) &
-    !$acc create(f, fd, ft, fdd, ftt, fdt, fddt, fdtt, fddtt) &
-    !$acc create(dpdf, dpdfd, dpdft, dpdfdt) &
-    !$acc create(ef, efd, eft, efdt, xf, xfd, xft, xfdt)  &
-    !$acc create(dt_sav, dt2_sav, dti_sav, dt2i_sav) &
-    !$acc create(dd_sav, dd2_sav, ddi_sav, dd2i_sav) &
-    !$acc create(do_coulomb, input_is_constant)
-
 public actual_eos, actual_eos_init, actual_eos_finalize
 
 contains
@@ -147,12 +122,8 @@ contains
     !..all other derivatives are analytic.
     !..
     !..references: cox & giuli chapter 24 ; timmes & swesty apj 1999
-#ifdef CUDA  
-  attributes(device) &
-#endif
-  subroutine actual_eos(input, state)
 
-        !$acc routine seq
+  subroutine actual_eos(input, state)
 
         use bl_error_module
         use bl_types
@@ -403,7 +374,6 @@ contains
            iat = int((log10(din) - dlo)*dstpi) + 1
            iat = max(1,min(iat,itmax-1))
 
-           !..access the table locations only once
            fi(1)  = f(iat,jat)
            fi(2)  = f(iat+1,jat)
            fi(3)  = f(iat,jat+1)
@@ -1205,18 +1175,6 @@ contains
         mindens = 10.d0**dlo
         maxdens = 10.d0**dhi
 
-        !$acc update &
-        !$acc device(ttol, dtol, tlo, thi, dlo, dhi) &
-        !$acc device(tstp, tstpi, dstp, dstpi) &
-        !$acc device(itmax, jtmax, d, t) &
-        !$acc device(f, fd, ft, fdd, ftt, fdt, fddt, fdtt, fddtt) &
-        !$acc device(dpdf, dpdfd, dpdft, dpdfdt) &
-        !$acc device(ef, efd, eft, efdt, xf, xfd, xft, xfdt) &
-        !$acc device(dt_sav, dt2_sav, dti_sav, dt2i_sav) &
-        !$acc device(dd_sav, dd2_sav, ddi_sav, dd2i_sav), &
-        !$acc device(do_coulomb, input_is_constant) &
-        !$acc device(max_newton)
-
     end subroutine actual_eos_init
 
     subroutine actual_eos_finalize()
@@ -1268,95 +1226,58 @@ contains
 
     ! quintic hermite polynomial functions
     ! psi0 and its derivatives
-#ifdef CUDA  
-  attributes(device) &
-#endif    
+
     function psi0(z)
-    !$acc routine seq
         double precision :: z, psi0
         psi0 = z**3 * ( z * (-6.0d0*z + 15.0d0) -10.0d0) + 1.0d0
     end function
 
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function dpsi0(z)
-    !$acc routine seq
         double precision :: z, dpsi0
         dpsi0 = z**2 * ( z * (-30.0d0*z + 60.0d0) - 30.0d0)
     end function
 
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function ddpsi0(z)
-    !$acc routine seq
         double precision :: z, ddpsi0
         ddpsi0 = z* ( z*( -120.0d0*z + 180.0d0) -60.0d0)
     end function
 
     ! psi1 and its derivatives
-#ifdef CUDA  
-  attributes(device) &
-#endif    
+
     function psi1(z)
-    !$acc routine seq
         double precision :: z, psi1
         psi1 = z* ( z**2 * ( z * (-3.0d0*z + 8.0d0) - 6.0d0) + 1.0d0)
     end function
 
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function dpsi1(z)
-    !$acc routine seq
         double precision :: z, dpsi1
         dpsi1 = z*z * ( z * (-15.0d0*z + 32.0d0) - 18.0d0) +1.0d0
     end function
 
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function ddpsi1(z)
-    !$acc routine seq
         double precision :: z, ddpsi1
         ddpsi1 = z * (z * (-60.0d0*z + 96.0d0) -36.0d0)
     end function
 
     ! psi2  and its derivatives
-#ifdef CUDA  
-  attributes(device) &
-#endif    
+
     function psi2(z)
-    !$acc routine seq
         double precision :: z, psi2
         psi2 = 0.5d0*z*z*( z* ( z * (-z + 3.0d0) - 3.0d0) + 1.0d0)
     end function
 
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function dpsi2(z)
-    !$acc routine seq
         double precision :: z, dpsi2
         dpsi2 = 0.5d0*z*( z*(z*(-5.0d0*z + 12.0d0) - 9.0d0) + 2.0d0)
     end function
 
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function ddpsi2(z)
-    !$acc routine seq
         double precision :: z, ddpsi2
         ddpsi2 = 0.5d0*(z*( z * (-20.0d0*z + 36.0d0) - 18.0d0) + 2.0d0)
     end function
 
     ! biquintic hermite polynomial function
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function h5(fi,w0t,w1t,w2t,w0mt,w1mt,w2mt,w0d,w1d,w2d,w0md,w1md,w2md)
-    !$acc routine seq
         double precision :: fi(36)
         double precision :: w0t,w1t,w2t,w0mt,w1mt,w2mt,w0d,w1d,w2d,w0md,w1md,w2md,h5
 
@@ -1382,49 +1303,29 @@ contains
 
     ! cubic hermite polynomial functions
     ! psi0 & derivatives
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function xpsi0(z)
-    !$acc routine seq
         double precision :: z, xpsi0
         xpsi0 = z * z * (2.0d0*z - 3.0d0) + 1.0
     end function
 
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function xdpsi0(z)
-    !$acc routine seq
         double precision :: z, xdpsi0
         xdpsi0 = z * (6.0d0*z - 6.0d0)
     end function
 
     ! psi1 & derivatives
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function xpsi1(z)
-    !$acc routine seq
         double precision :: z, xpsi1
         xpsi1 = z * ( z * (z - 2.0d0) + 1.0d0)
     end function
 
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function xdpsi1(z)
-    !$acc routine seq
         double precision :: z, xdpsi1
         xdpsi1 = z * (3.0d0*z - 4.0d0) + 1.0d0
     end function
 
     ! bicubic hermite polynomial function
-#ifdef CUDA  
-  attributes(device) &
-#endif    
     function h3(fi,w0t,w1t,w0mt,w1mt,w0d,w1d,w0md,w1md)
-    !$acc routine seq
         double precision :: fi(36)
         double precision :: w0t,w1t,w0mt,w1mt,w0d,w1d,w0md,w1md,h3
         h3 =   fi(1)  *w0d*w0t   +  fi(2)  *w0md*w0t &
