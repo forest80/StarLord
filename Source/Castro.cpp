@@ -561,39 +561,7 @@ Castro::estTimeStep (Real dt_old)
 
     Real estdt_hydro = max_dt / cfl;
 
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-    {
-	Real dt = max_dt / cfl;
-
-	for (MFIter mfi(stateMF,true); mfi.isValid(); ++mfi)
-	{
-	    const Box& box = mfi.tilebox();
-
-#ifdef CUDA
-            Real* dt_f = mfi.add_reduce_value(&dt, MFIter::MIN);
-#else
-            Real* dt_f = &dt;
-#endif
-
-#ifdef AMREX_USE_DEVICE
-            Device::prepare_for_launch(box.loVect(), box.hiVect());
-#endif
-
-	    ca_estdt(BL_TO_FORTRAN_BOX(box),
-		     BL_TO_FORTRAN_ANYD(stateMF[mfi]),
-		     ZFILL(dx),dt_f);
-
-	}
-#ifdef _OPENMP
-#pragma omp critical (castro_estdt)
-#endif
-	{
-	    estdt_hydro = std::min(estdt_hydro,dt);
-	}
-
-    }
+    ca_estdt();
 
     ParallelDescriptor::ReduceRealMin(estdt_hydro);
     estdt_hydro *= cfl;

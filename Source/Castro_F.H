@@ -136,10 +136,7 @@ extern "C"
      const amrex::Real dx[], const amrex::Real glo[],
      const amrex::Real* time, const int bc[]);
 
-  void ca_estdt
-    (const int* lo, const int* hi,
-     const BL_FORT_FAB_ARG_3D(state),
-     const amrex::Real* dx, amrex::Real* dt);
+  void ca_estdt();
 
   void ca_check_timestep
     (const BL_FORT_FAB_ARG_3D(state_old),
