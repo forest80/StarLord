@@ -6,13 +6,6 @@ module eos_module
 
   logical, save :: initialized = .false.
 
-  interface eos
-     module procedure eos_doit
-#ifdef CUDA
-     module procedure eos_host
-#endif
-  end interface eos
-
 contains
 
   ! EOS initialization routine: read in general EOS parameters, then 
@@ -140,7 +133,7 @@ contains
 
 
 
-  subroutine eos_doit(input, state)
+  subroutine eos(input, state)
 
     !$acc routine seq
 
@@ -165,7 +158,7 @@ contains
 
     call actual_eos(input, state)
 
-  end subroutine eos_doit
+  end subroutine eos
 
   subroutine eos_finalize() bind(c, name='eos_finalize')
 
