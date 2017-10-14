@@ -1,7 +1,5 @@
 module timestep_module
 
-  use amrex_fort_module, only: rt => amrex_real
-
   implicit none
 
 contains
@@ -12,13 +10,13 @@ contains
 
     use eos_module, only: eos
     use eos_type_module, only: eos_t, eos_input_re
-    use amrex_fort_module, only: rt => amrex_real, get_loop_bounds
+    use amrex_fort_module, only: get_loop_bounds
 
     implicit none
 
-    integer  :: i, j
-    integer  :: lo(3), hi(3)
-    integer  :: blo(3), bhi(3)
+    integer :: i, j
+    integer :: lo(3), hi(3)
+    integer :: blo(3), bhi(3)
 
     type (eos_t) :: eos_state
 
