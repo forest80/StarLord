@@ -58,68 +58,6 @@ module eos_type_module
   real(dp_t), allocatable :: minh
   real(dp_t), allocatable :: maxh
 
-  !$acc declare &
-  !$acc create(mintemp, maxtemp, mindens, maxdens, minx, maxx, minye, maxye) &
-  !$acc create(mine, maxe, minp, maxp, mins, maxs, minh, maxh)
-
-#ifdef CUDA
-  attributes(managed) :: mintemp
-  attributes(managed) :: maxtemp
-  attributes(managed) :: mindens
-  attributes(managed) :: maxdens
-  attributes(managed) :: minx
-  attributes(managed) :: maxx
-  attributes(managed) :: minye
-  attributes(managed) :: maxye
-  attributes(managed) :: mine
-  attributes(managed) :: maxe
-  attributes(managed) :: minp
-  attributes(managed) :: maxp
-  attributes(managed) :: mins
-  attributes(managed) :: maxs
-  attributes(managed) :: minh
-  attributes(managed) :: maxh
-#endif
-
-  ! A generic structure holding thermodynamic quantities and their derivatives,
-  ! plus some other quantities of interest.
-
-  ! rho      -- mass density (g/cm**3)
-  ! T        -- temperature (K)
-  ! xn       -- the mass fractions of the individual isotopes
-  ! p        -- the pressure (dyn/cm**2)
-  ! h        -- the enthalpy (erg/g)
-  ! e        -- the internal energy (erg/g)
-  ! s        -- the entropy (erg/g/K)
-  ! c_v      -- specific heat at constant volume
-  ! c_p      -- specific heat at constant pressure
-  ! ne       -- number density of electrons + positrons
-  ! np       -- number density of positrons only
-  ! eta      -- degeneracy parameter
-  ! pele     -- electron pressure + positron pressure
-  ! ppos     -- position pressure only
-  ! mu       -- mean molecular weight
-  ! mu_e     -- mean number of nucleons per electron
-  ! y_e      -- electron fraction == 1 / mu_e
-  ! dPdT     -- d pressure/ d temperature
-  ! dPdr     -- d pressure/ d density
-  ! dedT     -- d energy/ d temperature
-  ! dedr     -- d energy/ d density
-  ! dsdT     -- d entropy/ d temperature
-  ! dsdr     -- d entropy/ d density
-  ! dhdT     -- d enthalpy/ d temperature
-  ! dhdr     -- d enthalpy/ d density
-  ! dPdX     -- d pressure / d xmass
-  ! dhdX     -- d enthalpy / d xmass at constant pressure
-  ! gam1     -- first adiabatic index (d log P/ d log rho) |_s
-  ! cs       -- sound speed
-  ! abar     -- average atomic number ( sum_k {X_k} ) / ( sum_k {X_k/A_k} )
-  ! zbar     -- average proton number ( sum_k {Z_k X_k/ A_k} ) / ( sum_k {X_k/A_k} )
-  ! dpdA     -- d pressure/ d abar
-  ! dpdZ     -- d pressure/ d zbar
-  ! dedA     -- d energy/ d abar
-  ! dedZ     -- d energy/ d zbar
-
   type :: eos_t
 
     real(dp_t) :: rho
@@ -168,12 +106,7 @@ contains
   ! Given a set of mass fractions, calculate quantities that depend
   ! on the composition like abar and zbar.
 
-#ifdef CUDA
-  attributes(device) &
-#endif
   subroutine composition(state)
-
-    !$acc routine seq
 
     use bl_constants_module, only: ONE
     use network, only: aion, aion_inv, zion
@@ -198,12 +131,7 @@ contains
 
   ! Compute thermodynamic derivatives with respect to xn(:)
 
-#ifdef CUDA
-  attributes(device) &
-#endif
   subroutine composition_derivatives(state)
-
-    !$acc routine seq
 
     use bl_constants_module, only: ZERO
     use network, only: aion, aion_inv, zion
@@ -237,12 +165,7 @@ contains
   ! Normalize the mass fractions: they must be individually positive
   ! and less than one, and they must all sum to unity.
 
-#ifdef CUDA
-  attributes(device) &
-#endif
   subroutine normalize_abundances(state)
-
-    !$acc routine seq
 
     use bl_constants_module, only: ONE
     use extern_probin_module, only: small_x
@@ -261,12 +184,7 @@ contains
 
   ! Ensure that inputs are within reasonable limits.
 
-#ifdef CUDA
-  attributes(device) &
-#endif
   subroutine clean_state(state)
-
-    !$acc routine seq
 
     implicit none
 
@@ -295,12 +213,7 @@ contains
   end subroutine print_state
 
 
-#ifdef CUDA  
-  attributes(device) &
-#endif
   subroutine eos_get_small_temp(small_temp_out)
-
-    !$acc routine seq
 
     implicit none
 
@@ -311,12 +224,7 @@ contains
   end subroutine eos_get_small_temp
 
 
-#ifdef CUDA  
-  attributes(device) &
-#endif
   subroutine eos_get_small_dens(small_dens_out)
-
-    !$acc routine seq
 
     implicit none
 
@@ -328,12 +236,7 @@ contains
 
 
 
-#ifdef CUDA  
-  attributes(device) &
-#endif
   subroutine eos_get_max_temp(max_temp_out)
-
-    !$acc routine seq
 
     implicit none
 
@@ -345,12 +248,7 @@ contains
 
 
 
-#ifdef CUDA  
-  attributes(device) &
-#endif
   subroutine eos_get_max_dens(max_dens_out)
-
-    !$acc routine seq
 
     implicit none
 
