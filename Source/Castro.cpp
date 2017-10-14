@@ -541,37 +541,9 @@ Castro::initialTimeStep ()
 Real
 Castro::estTimeStep (Real dt_old)
 {
-    BL_PROFILE("Castro::estTimeStep()");
-
-    if (fixed_dt > 0.0)
-        return fixed_dt;
-
-    Real max_dt = 1.e200;
-
-    Real estdt = max_dt;
-
-    const MultiFab& stateMF = get_new_data(State_Type);
-
-    const Real* dx = geom.CellSizeF();
-
-    // Start the hydro with the max_dt value, but divide by CFL
-    // to account for the fact that we multiply by it at the end.
-    // This ensures that if max_dt is more restrictive than the hydro
-    // criterion, we will get exactly max_dt for a timestep.
-
-    Real estdt_hydro = max_dt / cfl;
-
     ca_estdt();
 
-    ParallelDescriptor::ReduceRealMin(estdt_hydro);
-    estdt_hydro *= cfl;
-
-    estdt = estdt_hydro;
-
-    if (verbose && ParallelDescriptor::IOProcessor())
-      std::cout << "Castro::estTimeStep (hydro-limited) at level " << level << ":  estdt = " << estdt << '\n';
-
-    return estdt;
+    return dt_old;
 }
 
 void
