@@ -4,26 +4,19 @@ module eos_module
 
   public eos_init, eos
 
-  logical, save :: initialized = .false.
-
 contains
 
   ! EOS initialization routine: read in general EOS parameters, then 
   ! call any specific initialization used by the EOS.
 
-  subroutine eos_init(small_temp, small_dens)
+  subroutine eos_init()
 
     use amrex_fort_module, only: rt => amrex_real
-    use parallel, only: parallel_IOProcessor
-    use bl_error_module, only: bl_warn
     use eos_type_module, only: mintemp, maxtemp, mindens, maxdens, minx, maxx, &
                                minye, maxye, mine, maxe, minp, maxp, minh, maxh, mins, maxs
     use actual_eos_module, only: actual_eos_init
 
     implicit none
-
-    real(rt), optional :: small_temp
-    real(rt), optional :: small_dens
 
     ! Allocate and set default values
 
@@ -61,42 +54,7 @@ contains
     minh    = 1.d-200
     maxh    = 1.d200
 
-    ! Set up any specific parameters or initialization steps required by the EOS we are using.
-
     call actual_eos_init
-
-    ! If they exist, save the minimum permitted user temperature and density.
-    ! These are only relevant to this module if they are larger than the minimum
-    ! possible EOS quantities. We will reset them to be equal to the EOS minimum
-    ! if they are smaller than that.
-
-    ! Note that in this routine we use the Fortran-based parallel_IOProcessor()
-    ! command rather than the C++-based version used elsewhere in Castro; this
-    ! ensures compatibility with Fortran-based test programs.
-
-    if (present(small_temp)) then
-       if (small_temp < mintemp) then
-          if (parallel_IOProcessor()) then
-             call bl_warn('EOS: small_temp cannot be less than the mintemp allowed by the EOS. Resetting small_temp to mintemp.')
-          endif
-          small_temp = mintemp
-       else
-          mintemp = small_temp
-       endif
-    endif
-
-    if (present(small_dens)) then
-       if (small_dens < mindens) then
-          if (parallel_IOProcessor()) then
-             call bl_warn('EOS: small_dens cannot be less than the mindens allowed by the EOS. Resetting small_dens to mindens.')
-          endif
-          small_dens = mindens
-       else
-          mindens = small_dens
-       endif
-    endif
-
-    initialized = .true.
 
   end subroutine eos_init
 
@@ -125,36 +83,5 @@ contains
     call actual_eos(input, state)
 
   end subroutine eos
-
-  subroutine eos_finalize() bind(c, name='eos_finalize')
-
-    use eos_type_module, only: mintemp, maxtemp, mindens, maxdens, &
-                               minx, maxx, minye, maxye, &
-                               mine, maxe, minp, maxp, &
-                               mins, maxs, minh, maxh
-    use actual_eos_module, only: actual_eos_finalize
-
-    implicit none
-
-    deallocate(mintemp)
-    deallocate(maxtemp)
-    deallocate(mindens)
-    deallocate(maxdens)
-    deallocate(minx)
-    deallocate(maxx)
-    deallocate(minye)
-    deallocate(maxye)
-    deallocate(mine)
-    deallocate(maxe)
-    deallocate(minp)
-    deallocate(maxp)
-    deallocate(mins)
-    deallocate(maxs)
-    deallocate(minh)
-    deallocate(maxh)
-
-    call actual_eos_finalize()
-
-  end subroutine eos_finalize
 
 end module eos_module

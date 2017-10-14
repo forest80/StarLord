@@ -88,8 +88,6 @@ Castro::variableCleanUp ()
 {
     desc_lst.clear();
 
-    eos_finalize();
-
     network_finalize();
 
     ca_extern_finalize();
