@@ -7,16 +7,16 @@ module extern_probin_module
 
   private
 
-  logical, allocatable, public :: use_eos_coulomb
-  logical, allocatable, public :: eos_input_is_constant
+  logical, allocatable, public :: eos_assume_neutral
+  real (kind=dp_t), allocatable, public :: eos_gamma
   real (kind=dp_t), allocatable, public :: small_x
 #ifdef CUDA
   attributes(managed) :: small_x
-  attributes(managed) :: eos_input_is_constant
-  attributes(managed) :: use_eos_coulomb
+  attributes(managed) :: eos_gamma
+  attributes(managed) :: eos_assume_neutral
 #endif
 
-  !$acc declare create(use_eos_coulomb, eos_input_is_constant, small_x)
+  !$acc declare create(eos_assume_neutral, eos_gamma, small_x)
 
 end module extern_probin_module
 
@@ -38,16 +38,16 @@ subroutine runtime_init(name,namlen)
   integer, parameter :: maxlen = 256
   character (len=maxlen) :: probin
 
-  namelist /extern/ use_eos_coulomb
-  namelist /extern/ eos_input_is_constant
+  namelist /extern/ eos_assume_neutral
+  namelist /extern/ eos_gamma
   namelist /extern/ small_x
 
-  allocate(use_eos_coulomb)
-  allocate(eos_input_is_constant)
+  allocate(eos_assume_neutral)
+  allocate(eos_gamma)
   allocate(small_x)
 
-  use_eos_coulomb = .true.
-  eos_input_is_constant = .false.
+  eos_assume_neutral = .true.
+  eos_gamma = 5.d0/3.d0
   small_x = 1.d-30
 
 
@@ -80,7 +80,7 @@ subroutine runtime_init(name,namlen)
   close (unit=un)
 
   !$acc update &
-  !$acc device(use_eos_coulomb, eos_input_is_constant, small_x)
+  !$acc device(eos_assume_neutral, eos_gamma, small_x)
 
 end subroutine runtime_init
 
@@ -91,8 +91,8 @@ subroutine ca_extern_finalize() bind(c, name='ca_extern_finalize')
 
   implicit none
 
-  deallocate(use_eos_coulomb)
-  deallocate(eos_input_is_constant)
+  deallocate(eos_assume_neutral)
+  deallocate(eos_gamma)
   deallocate(small_x)
 
 end subroutine ca_extern_finalize
