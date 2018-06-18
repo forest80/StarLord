@@ -19,8 +19,9 @@ TOP := $(CASTRO_HOME)
 
 AMREX_HOME ?= /path/to/amrex
 
-NETWORK_DIR ?= aprox13
-EOS_DIR ?= helmholtz
+NETWORK_DIR ?= general_null
+GENERAL_NET_INPUTS ?= $(MICROPHYSICS_HOME)/networks/$(NETWORK_DIR)/gammalaw.net
+EOS_DIR ?= gamma_law_general
 
 ifdef MICROPHYSICS_HOME
    EOS_PATH := $(MICROPHYSICS_HOME)/EOS/$(strip $(EOS_DIR))
