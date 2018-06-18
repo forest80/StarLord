@@ -783,10 +783,10 @@ module castro_util_module
 
 contains
 
-  AMREX_LAUNCH subroutine ca_enforce_consistent_e(lo,hi,state,s_lo,s_hi) bind(c,name='ca_enforce_consistent_e')
+  AMREX_DEVICE subroutine ca_enforce_consistent_e(lo,hi,state,s_lo,s_hi) bind(c,name='ca_enforce_consistent_e')
 
     use bl_constants_module, only: HALF, ONE
-    use amrex_fort_module, only: rt => amrex_real, get_loop_bounds
+    use amrex_fort_module, only: rt => amrex_real
     use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UEDEN, UEINT
 
     implicit none
@@ -797,17 +797,14 @@ contains
 
     ! Local variables
     integer  :: i,j,k
-    integer  :: blo(3), bhi(3)
     real(rt) :: u, v, w, rhoInv
-
-    call get_loop_bounds(blo, bhi, lo, hi)
 
     !
     ! Enforces (rho E) = (rho e) + 1/2 rho (u^2 + v^2 + w^2)
     !
-    do k = blo(3), bhi(3)
-       do j = blo(2), bhi(2)
-          do i = blo(1), bhi(1)
+    do k = lo(3), hi(3)
+       do j = lo(2), hi(2)
+          do i = lo(1), hi(1)
 
              rhoInv = ONE / state(i,j,k,URHO)
              u = state(i,j,k,UMX) * rhoInv
@@ -825,13 +822,13 @@ contains
 
 
 
-  AMREX_LAUNCH subroutine ca_reset_internal_e(lo,hi,u,u_lo,u_hi,verbose) bind(c,name='ca_reset_internal_e')
+  AMREX_DEVICE subroutine ca_reset_internal_e(lo,hi,u,u_lo,u_hi,verbose) bind(c,name='ca_reset_internal_e')
 
     use eos_module, only: eos
     use eos_type_module, only: eos_t, eos_input_re, eos_input_rt
     use network, only: nspec, naux
     use bl_constants_module, only: ZERO, HALF, ONE
-    use amrex_fort_module, only: rt => amrex_real, get_loop_bounds
+    use amrex_fort_module, only: rt => amrex_real
     use meth_params_module, only: NVAR, URHO, UMX, UMY, UMZ, UEDEN, UEINT, UFS, UFX, UTEMP, small_temp
 
     implicit none
@@ -843,20 +840,17 @@ contains
 
     ! Local variables
     integer  :: i,j,k
-    integer  :: blo(3), bhi(3)
     real(rt) :: Up, Vp, Wp, ke, rho_eint, eden, small_e, eint_new, rhoInv
 
     real(rt), parameter :: dual_energy_eta2 = 1.e-4_rt
 
     type (eos_t) :: eos_state
 
-    call get_loop_bounds(blo, bhi, lo, hi)
-
     ! Reset internal energy
 
-    do k = blo(3), bhi(3)
-       do j = blo(2), bhi(2)
-          do i = blo(1), bhi(1)
+    do k = lo(3), hi(3)
+       do j = lo(2), hi(2)
+          do i = lo(1), hi(1)
 
              rhoInv = ONE/u(i,j,k,URHO)
              Up = u(i,j,k,UMX) * rhoInv
@@ -923,13 +917,13 @@ contains
 
 
 
-  AMREX_LAUNCH subroutine ca_compute_temp(lo,hi,state,s_lo,s_hi) bind(c,name='ca_compute_temp')
+  AMREX_DEVICE subroutine ca_compute_temp(lo,hi,state,s_lo,s_hi) bind(c,name='ca_compute_temp')
 
     use network, only: nspec, naux
     use eos_module, only: eos
     use eos_type_module, only: eos_input_re, eos_t
     use bl_constants_module, only: ZERO, ONE
-    use amrex_fort_module, only: rt => amrex_real, get_loop_bounds
+    use amrex_fort_module, only: rt => amrex_real
     use meth_params_module, only: NVAR, URHO, UEDEN, UEINT, UTEMP, UFS, UFX
 
     implicit none
@@ -939,16 +933,13 @@ contains
     real(rt), intent(inout) :: state(s_lo(1):s_hi(1),s_lo(2):s_hi(2),s_lo(3):s_hi(3),NVAR)
 
     integer  :: i,j,k
-    integer  :: blo(3), bhi(3)
     real(rt) :: rhoInv
 
     type (eos_t) :: eos_state
 
-    call get_loop_bounds(blo, bhi, lo, hi)
-
-    do k = blo(3), bhi(3)
-       do j = blo(2), bhi(2)
-          do i = blo(1), bhi(1)
+    do k = lo(3), hi(3)
+       do j = lo(2), hi(2)
+          do i = lo(1), hi(1)
 
              ! First check the inputs for validity.
 
@@ -994,12 +985,12 @@ contains
   
 
 
-  AMREX_LAUNCH subroutine ca_check_initial_species(lo, hi, &
+  AMREX_DEVICE subroutine ca_check_initial_species(lo, hi, &
                                                    state, state_lo, state_hi) bind(c,name='ca_check_initial_species')
 
     use network           , only: nspec
     use meth_params_module, only: NVAR, URHO, UFS
-    use amrex_fort_module, only: rt => amrex_real, get_loop_bounds
+    use amrex_fort_module, only: rt => amrex_real
 
     implicit none
 
@@ -1009,14 +1000,11 @@ contains
 
     ! Local variables
     integer  :: i, j, k
-    integer  :: blo(3), bhi(3)
     real(rt) :: spec_sum
 
-    call get_loop_bounds(blo, bhi, lo, hi)
-
-    do k = blo(3), bhi(3)
-       do j = blo(2), bhi(2)
-          do i = blo(1), bhi(1)
+    do k = lo(3), hi(3)
+       do j = lo(2), hi(2)
+          do i = lo(1), hi(1)
 
              spec_sum = sum(state(i,j,k,UFS:UFS+nspec-1))
 
@@ -1037,11 +1025,11 @@ contains
 
 
 
-  AMREX_LAUNCH subroutine ca_normalize_species(u, u_lo, u_hi, lo, hi) bind(c,name='ca_normalize_species')
+  AMREX_DEVICE subroutine ca_normalize_species(u, u_lo, u_hi, lo, hi) bind(c,name='ca_normalize_species')
 
     use network, only: nspec
     use bl_constants_module, only: ONE
-    use amrex_fort_module, only: rt => amrex_real, get_loop_bounds
+    use amrex_fort_module, only: rt => amrex_real
     use extern_probin_module, only: small_x
     use meth_params_module, only: NVAR, URHO, UFS
 
@@ -1053,14 +1041,11 @@ contains
 
     ! Local variables
     integer  :: i, j, k
-    integer  :: blo(3), bhi(3)
     real(rt) :: xn(nspec)
 
-    call get_loop_bounds(blo, bhi, lo, hi)
-
-    do k = blo(3), bhi(3)
-       do j = blo(2), bhi(2)
-          do i = blo(1), bhi(1)
+    do k = lo(3), hi(3)
+       do j = lo(2), hi(2)
+          do i = lo(1), hi(1)
 
              xn = u(i,j,k,UFS:UFS+nspec-1)
 
@@ -1077,12 +1062,10 @@ contains
   end subroutine ca_normalize_species
 
 
-#ifdef CUDA
-  attributes(global) &
-#endif
-  subroutine dervel(vel,v_lo,v_hi,nv, &
-                    dat,d_lo,d_hi,nc,lo,hi,domlo, &
-                    domhi,delta,xlo,time,dt,bc,level,grid_no)
+
+  AMREX_LAUNCH subroutine dervel(vel,v_lo,v_hi,nv, &
+                                 dat,d_lo,d_hi,nc,lo,hi,domlo, &
+                                 domhi,delta,xlo,time,dt,bc,level,grid_no)
 
     !
     ! This routine will derive the velocity from the momentum.
@@ -1119,12 +1102,9 @@ contains
 
 
 
-#ifdef CUDA
-  attributes(global) &
-#endif
-  subroutine derpres(p,p_lo,p_hi,ncomp_p, &
-                     u,u_lo,u_hi,ncomp_u,lo,hi,domlo, &
-                     domhi,dx,xlo,time,dt,bc,level,grid_no)
+  AMREX_LAUNCH subroutine derpres(p,p_lo,p_hi,ncomp_p, &
+                                  u,u_lo,u_hi,ncomp_u,lo,hi,domlo, &
+                                  domhi,dx,xlo,time,dt,bc,level,grid_no)
 
     use network, only: nspec, naux
     use eos_module, only: eos
@@ -1174,13 +1154,10 @@ contains
 
 
 
-#ifdef CUDA
-  attributes(global) &
-#endif
-  subroutine ca_summass(lo,hi,rho,r_lo,r_hi,dx, &
-                        vol,v_lo,v_hi,mass) bind(c,name='ca_summass')
+  AMREX_DEVICE subroutine ca_summass(lo,hi,rho,r_lo,r_hi,dx, &
+                                     vol,v_lo,v_hi,mass) bind(c,name='ca_summass')
 
-    use amrex_fort_module, only: rt => amrex_real, get_loop_bounds, amrex_add
+    use amrex_fort_module, only: rt => amrex_real, amrex_add
 
     implicit none
 
@@ -1193,14 +1170,11 @@ contains
     real(rt), intent(inout) :: mass
 
     integer  :: i, j, k
-    integer  :: blo(3), bhi(3)
     real(rt) :: dm
 
-    call get_loop_bounds(blo, bhi, lo, hi)
-
-    do k = blo(3), bhi(3)
-       do j = blo(2), bhi(2)
-          do i = blo(1), bhi(1)
+    do k = lo(3), hi(3)
+       do j = lo(2), hi(2)
+          do i = lo(1), hi(1)
 
              dm = rho(i,j,k) * vol(i,j,k)
 

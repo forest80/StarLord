@@ -147,8 +147,10 @@ Castro::volWgtSum (const std::string& name,
         Real* s_f = &sum;
 #endif
 
-	FORT_LAUNCH(box, ca_summass,
-                    BL_TO_FORTRAN_BOX(box), BL_TO_FORTRAN_ANYD(fab), ZFILL(dx), BL_TO_FORTRAN_ANYD(volume[mfi]), s_f);
+#pragma gpu
+	ca_summass
+            (AMREX_ARLIM_ARG(box.loVect()), AMREX_ARLIM_ARG(box.hiVect()),
+             BL_TO_FORTRAN_ANYD(fab), ZFILL(dx), BL_TO_FORTRAN_ANYD(volume[mfi]), s_f);
     }
 
     if (!local)
