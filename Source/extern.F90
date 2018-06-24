@@ -10,7 +10,7 @@ module extern_probin_module
   logical, allocatable, public :: eos_assume_neutral
   real (kind=dp_t), allocatable, public :: eos_gamma
   real (kind=dp_t), allocatable, public :: small_x
-#ifdef CUDA
+#ifdef AMREX_USE_CUDA
   attributes(managed) :: small_x
   attributes(managed) :: eos_gamma
   attributes(managed) :: eos_assume_neutral
@@ -25,10 +25,6 @@ subroutine runtime_init(name,namlen)
   use extern_probin_module
 
   implicit none
-
-#ifdef CUDA
-  integer :: cuda_result
-#endif
 
   integer :: namlen
   integer :: name(namlen)
