@@ -916,8 +916,8 @@ contains
   subroutine ca_compute_temp(lo,hi,state,s_lo,s_hi) bind(c,name='ca_compute_temp')
 
     use network, only: nspec, naux
-    use eos_module, only: eos
-    use eos_type_module, only: eos_input_re, eos_t
+    use eos_module, only: reduced_eos
+    use eos_type_module, only: eos_input_T_from_re, reduced_eos_t
     use bl_constants_module, only: ZERO, ONE
     use amrex_fort_module, only: rt => amrex_real
     use meth_params_module, only: NVAR, URHO, UEDEN, UEINT, UTEMP, UFS, UFX
@@ -931,7 +931,7 @@ contains
     integer  :: i,j,k
     real(rt) :: rhoInv
 
-    type (eos_t) :: eos_state
+    type (reduced_eos_t) :: eos_state
 
     !$gpu
 
@@ -967,7 +967,7 @@ contains
              eos_state % xn  = state(i,j,k,UFS:UFS+nspec-1) * rhoInv
              eos_state % aux = state(i,j,k,UFX:UFX+naux-1) * rhoInv
 
-             call eos(eos_input_re, eos_state)
+             call reduced_eos(eos_input_T_from_re, eos_state)
 
              state(i,j,k,UTEMP) = eos_state % T
 

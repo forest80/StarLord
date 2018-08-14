@@ -16,6 +16,8 @@ module eos_type_module
   integer, parameter :: eos_input_ph = 7  ! p, h are inputs
   integer, parameter :: eos_input_th = 8  ! T, h are inputs
 
+  integer, parameter :: eos_input_T_from_re = 9 ! rho, e are inputs, only return T
+
   ! these are used to allow for a generic interface to the 
   ! root finding
   integer, parameter :: itemp = 1
@@ -163,7 +165,27 @@ module eos_type_module
     real(dp_t) :: dedA
     real(dp_t) :: dedZ
 
-  end type eos_t
+   end type eos_t
+
+
+   type :: reduced_eos_t
+
+    real(dp_t) :: rho
+    real(dp_t) :: T
+    real(dp_t) :: p
+    real(dp_t) :: e
+    real(dp_t) :: h
+    real(dp_t) :: s
+    real(dp_t) :: xn(nspec)
+    real(dp_t) :: aux(naux)
+
+    real(dp_t) :: abar
+    real(dp_t) :: zbar
+
+    real(dp_t) :: mu_e
+    real(dp_t) :: y_e
+
+   end type reduced_eos_t
 
 contains
 
@@ -196,6 +218,34 @@ contains
     state % zbar = state % abar / state % mu_e
 
   end subroutine composition
+
+
+  subroutine reduced_composition(state)
+
+    use bl_constants_module, only: ONE
+    use network, only: aion, aion_inv, zion
+
+    implicit none
+
+    !$acc routine seq
+
+    type (reduced_eos_t), intent(inout) :: state
+
+    !$gpu
+
+    ! Calculate abar, the mean nucleon number,
+    ! zbar, the mean proton number,
+    ! mu, the mean molecular weight,
+    ! mu_e, the mean number of nucleons per electron, and
+    ! y_e, the electron fraction.
+
+    state % mu_e = ONE / (sum(state % xn(:) * zion(:) * aion_inv(:)))
+    state % y_e = ONE / state % mu_e
+
+    state % abar = ONE / (sum(state % xn(:) * aion_inv(:)))
+    state % zbar = state % abar / state % mu_e
+
+  end subroutine reduced_composition
 
 
 

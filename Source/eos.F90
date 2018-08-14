@@ -110,8 +110,8 @@ contains
 
     !$acc routine seq
 
-    use eos_type_module, only: eos_t, composition
-    use actual_eos_module, only: actual_eos
+    use eos_type_module, only: eos_t, composition, eos_input_T_from_re
+    use actual_eos_module, only: actual_eos, actual_eos_T_from_re
 #ifndef AMREX_USE_GPU
     use amrex_error_module, only: amrex_error
 #endif
@@ -149,6 +149,49 @@ contains
     endif
 
   end subroutine eos
+
+
+
+  subroutine reduced_eos(input, state)
+
+    !$acc routine seq
+
+    use eos_type_module, only: reduced_eos_t, reduced_composition, eos_input_T_from_re
+    use actual_eos_module, only: actual_eos, actual_eos_T_from_re
+#ifndef AMREX_USE_GPU
+    use amrex_error_module, only: amrex_error
+#endif
+
+    implicit none
+
+    ! Input arguments
+
+    integer,      intent(in   ) :: input
+    type (reduced_eos_t), intent(inout) :: state
+
+    logical :: has_been_reset
+
+    !$gpu
+
+    ! Local variables
+
+#ifndef AMREX_USE_GPU
+    if (.not. initialized) call amrex_error('EOS: not initialized')
+#endif
+
+    ! Get abar, zbar, etc.
+
+    call reduced_composition(state)
+
+    ! Call the EOS.
+
+    if (.not. has_been_reset) then
+       if (input == eos_input_T_from_re) then
+          call actual_eos_T_from_re(state % T, state % rho, state % e, state % abar, state % zbar, state % y_e)
+       end if
+    endif
+
+  end subroutine reduced_eos
 
 
 
