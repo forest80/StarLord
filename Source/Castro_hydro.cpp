@@ -117,7 +117,7 @@ Castro::construct_mol_hydro_source(Real time, Real dt, int istage, int nstages)
 #pragma gpu
           ca_construct_flux
               (AMREX_ARLIM_ARG(ebx.loVect()), AMREX_ARLIM_ARG(ebx.hiVect()),
-               domain_lo, domain_hi,
+               TEST_MACRO_TWO(domain_lo), domain_hi,
                dx, dt,
                idir_f,
                BL_TO_FORTRAN_ANYD(Sborder[mfi]),

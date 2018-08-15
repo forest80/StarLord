@@ -18,6 +18,8 @@
 using std::istream;
 using std::ostream;
 
+#define TEST_MACRO_ONE(x) x
+#define TEST_MACRO_TWO(x) x
 
 enum StateType { State_Type = 0 };
 

@@ -68,7 +68,6 @@ Vector< Vector<Real> > Castro::a_mol;
 Vector<Real> Castro::b_mol;
 Vector<Real> Castro::c_mol;
 
-
 #include <castro_defaults.H>
 
 std::string  Castro::probin_file = "probin";
@@ -446,7 +445,7 @@ Castro::initData ()
 #pragma gpu
           ca_initdata
               (level, AMREX_ARLIM_ARG(box.loVect()), AMREX_ARLIM_ARG(box.hiVect()),
-               BL_TO_FORTRAN_ANYD(S_new[mfi]), dx,
+               BL_TO_FORTRAN_ANYD(S_new[mfi]), TEST_MACRO_ONE(dx),
                rbx.lo(), rbx.hi());
        }
 
