@@ -1,15 +1,14 @@
 module extern_probin_module
 
-  use bl_types
-  use bl_space
+  use amrex_fort_module, only: rt => amrex_real
 
   implicit none
 
   private
 
   logical, allocatable, public :: eos_assume_neutral
-  real (kind=dp_t), allocatable, public :: eos_gamma
-  real (kind=dp_t), allocatable, public :: small_x
+  real(rt), allocatable, public :: eos_gamma
+  real(rt), allocatable, public :: small_x
 #ifdef AMREX_USE_CUDA
   attributes(managed) :: small_x
   attributes(managed) :: eos_gamma
@@ -45,7 +44,6 @@ subroutine runtime_init(name,namlen)
   eos_assume_neutral = .true.
   eos_gamma = 5.d0/3.d0
   small_x = 1.d-30
-
 
   ! create the filename
   if (namlen > maxlen) then
